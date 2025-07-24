@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Multi-Face Capture Result</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 1em; }
+        .face-grid { display: inline-block; margin: 0.5em; }
+        .face-grid div { width: 30px; height: 30px; float: left; border: 1px solid #333; }
+        .container { display: flex; flex-wrap: wrap; justify-content: center; }
+    </style>
+</head>
+<body>
+    <h1>All Faces Captured</h1>
+    <div class="container">
+        {% for label, data in faces.items() %}
+        <div class="face-grid">
+            <h3>{{ label }}</h3>
+            <!-- Grid placeholder, could render actual colors -->
+            <img src="{{ data }}" style="width:90px;height:90px;border:1px solid #333;">
+        </div>
+        {% endfor %}
+    </div>
+    <h2>Solution:</h2>
+    <p>{{ solution }}</p>
+    <a href="/">Back Home</a>
+</body>
+</html>

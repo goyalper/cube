@@ -1,0 +1,264 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CubeMaster Pro - Learn the Golden 20 Steps{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+      body { font-family: 'Poppins', sans-serif; }
+      
+      /* Centered overlay grid */
+      .overlay {
+        position: absolute;
+        top: 50%; left: 50%;
+        width: 240px; height: 240px;
+        transform: translate(-50%, -50%);
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(3, 1fr);
+        border: 2px dashed rgba(255,255,255,0.8);
+        pointer-events: none;
+      }
+      
+      /* Animated arrows */
+      @keyframes slideDown {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(10px); }
+      }
+      @keyframes slideUp {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+      }
+      @keyframes slideLeft {
+        0%, 100% { transform: translateX(0); }
+        50% { transform: translateX(-10px); }
+      }
+      @keyframes slideRight {
+        0%, 100% { transform: translateX(0); }
+        50% { transform: translateX(10px); }
+      }
+      
+      .arrow-down { animation: slideDown 2s infinite; }
+      .arrow-up { animation: slideUp 2s infinite; }
+      .arrow-left { animation: slideLeft 2s infinite; }
+      .arrow-right { animation: slideRight 2s infinite; }
+      
+      /* Gradient backgrounds */
+      .gradient-bg {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
+      
+      .cube-gradient {
+        background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #ffeaa7, #dda0dd);
+        background-size: 400% 400%;
+        animation: gradientShift 8s ease infinite;
+      }
+      
+      @keyframes gradientShift {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+      }
+      
+      /* 3D cube styles */
+      .cube-3d {
+        transform-style: preserve-3d;
+        transition: transform 0.6s;
+      }
+      
+      .cube-face {
+        position: absolute;
+        width: 100px;
+        height: 100px;
+        border: 2px solid #333;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(3, 1fr);
+        gap: 1px;
+      }
+      
+      .cube-sticker {
+        border: 1px solid #000;
+      }
+      
+      /* Face preview grid */
+      .face-preview-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(4, 1fr);
+        gap: 10px;
+        max-width: 300px;
+      }
+      
+      .face-slot {
+        aspect-ratio: 1;
+        border: 2px dashed #ccc;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f9f9f9;
+        transition: all 0.3s ease;
+      }
+      
+      .face-slot.captured {
+        border: 2px solid #10b981;
+        background: #f0fdf4;
+      }
+      
+      .face-slot img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 6px;
+      }
+      
+      /* Stickers and animations */
+      .floating-sticker {
+        animation: float 3s ease-in-out infinite;
+      }
+      
+      @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+      }
+      
+      .pulse-glow {
+        animation: pulse-glow 2s infinite;
+      }
+      
+      @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
+        50% { box-shadow: 0 0 40px rgba(59, 130, 246, 0.8); }
+      }
+    </style>
+    {% block head %}{% endblock %}
+</head>
+<body class="bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 min-h-screen">
+    <!-- Header -->
+    <header class="gradient-bg shadow-lg">
+      <div class="container mx-auto px-4 py-3">
+        <nav class="flex justify-between items-center">
+          <a href="{% url 'index' %}" class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+              <i class="fas fa-cube text-purple-600 text-xl"></i>
+            </div>
+            <div>
+              <h1 class="text-white text-xl font-bold">CubeMaster Pro</h1>
+              <p class="text-purple-200 text-xs">Learn the Golden 20 Steps</p>
+            </div>
+          </a>
+          
+          <div class="hidden md:flex space-x-6">
+            <a href="{% url 'index' %}" class="text-white hover:text-purple-200 transition flex items-center space-x-1">
+              <i class="fas fa-home"></i><span>Home</span>
+            </a>
+            <a href="{% url 'multi_capture' %}" class="text-white hover:text-purple-200 transition flex items-center space-x-1">
+              <i class="fas fa-camera"></i><span>Solve Cube</span>
+            </a>
+            <a href="{% url 'help' %}" class="text-white hover:text-purple-200 transition flex items-center space-x-1">
+              <i class="fas fa-graduation-cap"></i><span>Learn Steps</span>
+            </a>
+            <a href="{% url 'about' %}" class="text-white hover:text-purple-200 transition flex items-center space-x-1">
+              <i class="fas fa-info-circle"></i><span>About</span>
+            </a>
+          </div>
+          
+          <!-- Mobile menu button -->
+          <button class="md:hidden text-white" onclick="toggleMobileMenu()">
+            <i class="fas fa-bars text-xl"></i>
+          </button>
+        </nav>
+        
+        <!-- Mobile menu -->
+        <div id="mobileMenu" class="md:hidden hidden mt-4 pb-4">
+          <div class="flex flex-col space-y-3">
+            <a href="{% url 'index' %}" class="text-white hover:text-purple-200 transition flex items-center space-x-2">
+              <i class="fas fa-home"></i><span>Home</span>
+            </a>
+            <a href="{% url 'multi_capture' %}" class="text-white hover:text-purple-200 transition flex items-center space-x-2">
+              <i class="fas fa-camera"></i><span>Solve Cube</span>
+            </a>
+            <a href="{% url 'help' %}" class="text-white hover:text-purple-200 transition flex items-center space-x-2">
+              <i class="fas fa-graduation-cap"></i><span>Learn Steps</span>
+            </a>
+            <a href="{% url 'about' %}" class="text-white hover:text-purple-200 transition flex items-center space-x-2">
+              <i class="fas fa-info-circle"></i><span>About</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8 min-h-screen">
+      {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-12">
+      <div class="container mx-auto px-4">
+        <div class="grid md:grid-cols-4 gap-8">
+          <div>
+            <div class="flex items-center space-x-2 mb-4">
+              <i class="fas fa-cube text-purple-400 text-2xl"></i>
+              <h3 class="text-xl font-bold">CubeMaster Pro</h3>
+            </div>
+            <p class="text-gray-400 mb-4">Master the Rubik's Cube with our AI-powered solver and learn the golden 20 steps that every cuber should know.</p>
+            <div class="flex space-x-4">
+              <a href="#" class="text-gray-400 hover:text-purple-400 transition"><i class="fab fa-youtube"></i></a>
+              <a href="#" class="text-gray-400 hover:text-purple-400 transition"><i class="fab fa-instagram"></i></a>
+              <a href="#" class="text-gray-400 hover:text-purple-400 transition"><i class="fab fa-tiktok"></i></a>
+            </div>
+          </div>
+          
+          <div>
+            <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
+            <ul class="space-y-2">
+              <li><a href="{% url 'index' %}" class="text-gray-400 hover:text-white transition">Home</a></li>
+              <li><a href="{% url 'multi_capture' %}" class="text-gray-400 hover:text-white transition">Solve Your Cube</a></li>
+              <li><a href="{% url 'help' %}" class="text-gray-400 hover:text-white transition">Golden 20 Steps</a></li>
+              <li><a href="{% url 'about' %}" class="text-gray-400 hover:text-white transition">About Us</a></li>
+            </ul>
+          </div>
+          
+          <div>
+            <h4 class="text-lg font-semibold mb-4">Learning</h4>
+            <ul class="space-y-2">
+              <li><a href="#" class="text-gray-400 hover:text-white transition">Beginner's Guide</a></li>
+              <li><a href="#" class="text-gray-400 hover:text-white transition">Advanced Algorithms</a></li>
+              <li><a href="#" class="text-gray-400 hover:text-white transition">Speed Cubing Tips</a></li>
+              <li><a href="#" class="text-gray-400 hover:text-white transition">Practice Drills</a></li>
+            </ul>
+          </div>
+          
+          <div>
+            <h4 class="text-lg font-semibold mb-4">Community</h4>
+            <ul class="space-y-2">
+              <li><a href="#" class="text-gray-400 hover:text-white transition">Join Discord</a></li>
+              <li><a href="#" class="text-gray-400 hover:text-white transition">Facebook Group</a></li>
+              <li><a href="#" class="text-gray-400 hover:text-white transition">Competitions</a></li>
+              <li><a href="#" class="text-gray-400 hover:text-white transition">Leaderboards</a></li>
+            </ul>
+          </div>
+        </div>
+        
+        <div class="border-t border-gray-700 mt-8 pt-8 text-center">
+          <p class="text-gray-400">&copy; 2025 CubeMaster Pro. Made with ❤️ for cube enthusiasts worldwide.</p>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Global Scripts -->
+    <script>
+      function toggleMobileMenu() {
+        const menu = document.getElementById('mobileMenu');
+        menu.classList.toggle('hidden');
+      }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

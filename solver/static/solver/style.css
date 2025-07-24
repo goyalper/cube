@@ -1,0 +1,85 @@
+/* CubeMaster Pro - Additional Styles */
+
+/* Cube sticker colors */
+.cube-sticker-red { background-color: #ff0000; }
+.cube-sticker-green { background-color: #00ff00; }
+.cube-sticker-blue { background-color: #0000ff; }
+.cube-sticker-yellow { background-color: #ffff00; }
+.cube-sticker-orange { background-color: #ff8000; }
+.cube-sticker-white { background-color: #ffffff; border: 1px solid #ccc; }
+
+/* Enhanced animations */
+@keyframes cubeRotate {
+    0% { transform: rotateX(0) rotateY(0); }
+    25% { transform: rotateX(90deg) rotateY(0); }
+    50% { transform: rotateX(90deg) rotateY(90deg); }
+    75% { transform: rotateX(0) rotateY(90deg); }
+    100% { transform: rotateX(0) rotateY(0); }
+}
+
+.cube-rotate-animation {
+    animation: cubeRotate 4s infinite;
+}
+
+/* Face preview improvements */
+.face-slot {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.face-slot:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Loading spinner */
+.spinner {
+    border: 4px solid #f3f4f6;
+    border-top: 4px solid #7c3aed;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Button hover effects */
+.btn-3d {
+    transform: perspective(1px) translateZ(0);
+    transition: transform 0.2s;
+}
+
+.btn-3d:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+
+/* Progressive disclosure animations */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    .face-preview-grid {
+        max-width: 250px;
+    }
+    
+    .cube-3d {
+        width: 100%;
+        height: 250px;
+    }
+    
+    .floating-sticker {
+        display: none; /* Hide on mobile for performance */
+    }
+}

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Capture Face {{ face_label }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 1em; }
+        #video { width: 100%; max-width: 300px; height: auto; border: 2px solid #333; }
+        #overlay { position: absolute; top: 50%; left: 50%; width: 220px; height: 220px; margin-top: -110px; margin-left: -110px; border: 2px dashed #fff; box-sizing: border-box; }
+        #video-container { position: relative; display: inline-block; }
+        .face-preview { display: inline-block; margin: 0.5em; }
+        .face-preview img { width: 60px; height: 60px; border: 1px solid #333; }
+        .progress { margin: 1em 0; }
+        .progress span { display: inline-block; width: 30px; height: 30px; line-height: 30px; border: 1px solid #333; margin: 0 2px; border-radius: 3px; }
+        .progress .done { background: #4CAF50; color: white; }
+        button, .reset-btn { padding: 0.5em 1em; font-size: 1em; margin-top: 1em; }
+        .reset-btn { display: block; margin: 1em auto; color: red; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <h1>Capture Face {{ face_label }}</h1>
+    <div class="progress">
+        {% for f in faces_order %}
+            <span class="{% if f in faces %}done{% endif %}">{{ f }}</span>
+        {% endfor %}
+    </div>
+    <div id="video-container">
+        <video id="video" autoplay playsinline></video>
+        <div id="overlay"></div>
+    </div>
+    <br>
+    {% if faces.get(face_label) %}
+        <div class="face-preview">
+            <p>{{ face_label }} captured</p>
+            <img src="{{ faces[face_label] }}" alt="Face {{ face_label }}">
+        </div>
+        <p>Tap capture again to retake.</p>
+    {% endif %}
+    <button id="capture">Capture {{ face_label }}</button>
+    <div style="margin-top: 1em;">or upload a face image:</div>
+    <input type="file" id="fileInput" accept="image/*">
+    <form id="faceForm" method="post" action="/multi_capture/capture">
+        <input type="hidden" name="face" value="{{ face_label }}">
+        <input type="hidden" name="image" id="imageData">
+    </form>
+    <a class="reset-btn" href="{{ url_for('multi_reset') }}">Reset All Faces</a>
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.createElement('canvas');
+        canvas.width = 300;
+        canvas.height = 300;
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+            .then(stream => { video.srcObject = stream; })
+            .catch(err => { alert('Camera access denied!'); });
+        document.getElementById('capture').onclick = function() {
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const dataURL = canvas.toDataURL('image/png');
+            document.getElementById('imageData').value = dataURL;
+            document.getElementById('faceForm').submit();
+        };
+        // handle upload fallback
+        document.getElementById('fileInput').onchange = function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                document.getElementById('imageData').value = evt.target.result;
+                document.getElementById('faceForm').submit();
+            };
+            reader.readAsDataURL(file);
+        };
+    </script>
+</body>
+</html>

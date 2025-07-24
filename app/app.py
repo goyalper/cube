@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, session
 import os
 import cv2
 import numpy as np
@@ -12,10 +12,20 @@ from io import BytesIO
 from PIL import Image
 
 app = Flask(__name__)
+# secret key for session tracking
+app.secret_key = os.urandom(24)
+
+# constants for face order
+FACES = ['U', 'R', 'F', 'D', 'L', 'B']
 
 
-# Main entry: live camera
+# Main entry: home page with options
 @app.route('/')
+def index():
+    return render_template('index.html')
+
+# Single live camera capture
+@app.route('/camera')
 def camera():
     return render_template('camera.html')
 
@@ -33,9 +43,12 @@ def upload():
     image = request.files['image']
     if image.filename == '':
         return redirect(url_for('upload_page'))
-    image_path = os.path.join('static', image.filename)
-    image.save(image_path)
-    cube_state = extract_cube_state(image_path)
+    # Save uploaded image to the static folder
+    file_path = os.path.join(app.static_folder, image.filename)
+    image.save(file_path)
+    # Use URL path for image
+    image_path = f"static/{image.filename}"
+    cube_state = extract_cube_state(file_path)
     solution = solve_cube(cube_state)
     return render_template('result.html', image_path=image_path, solution=solution)
 
@@ -49,9 +62,12 @@ def camera_upload():
     header, encoded = data_url.split(',', 1)
     img_bytes = base64.b64decode(encoded)
     img = Image.open(BytesIO(img_bytes)).convert('RGB')
-    image_path = os.path.join('static', 'camera_capture.png')
-    img.save(image_path)
-    cube_state = extract_cube_state(image_path)
+    # Save captured image to the static folder
+    file_path = os.path.join(app.static_folder, 'camera_capture.png')
+    img.save(file_path)
+    # URL path for template
+    image_path = 'static/camera_capture.png'
+    cube_state = extract_cube_state(file_path)
     solution = solve_cube(cube_state)
     return render_template('result.html', image_path=image_path, solution=solution)
 
@@ -99,6 +115,36 @@ def solve_cube(cube_state):
             return f"Error solving cube: {e}"
     else:
         return "Could not extract cube state or kociemba not installed."
+
+
+@app.route('/multi_capture')
+def multi_capture():
+    # get stored faces from session
+    captured = session.get('faces', {})
+    # if all faces captured, show result
+    if len(captured) >= len(FACES):
+        # solve cube based on captured face images or data
+        solution = solve_cube(''.join(''.join(['U']*9) for _ in FACES))  # placeholder state
+        return render_template('multi_result.html', faces=captured, solution=solution, faces_order=FACES)
+    face_label = FACES[len(captured)]
+    return render_template('multi_capture.html', face_label=face_label, faces=captured, faces_order=FACES)
+
+@app.route('/multi_reset')
+def multi_reset():
+    session.pop('faces', None)
+    return redirect(url_for('multi_capture'))
+
+@app.route('/multi_capture/capture', methods=['POST'])
+def multi_capture_face():
+    face_label = request.form.get('face')
+    data_url = request.form.get('image')
+    if not face_label or not data_url:
+        return redirect(url_for('multi_capture'))
+    faces = session.get('faces', {})
+    faces[face_label] = data_url
+    session['faces'] = faces
+    return redirect(url_for('multi_capture'))
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)

@@ -1,0 +1,754 @@
+{% extends 'solver/base.html' %}
+{% block title %}Solution Ready - CubeMaster Pro{% endblock %}
+
+{% block head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+  <!-- Success Header -->
+  <div class="text-center mb-8">
+    <div class="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-r from-green-400 to-blue-500 rounded-full mb-4 animate-pulse">
+      <i class="fas fa-trophy text-white text-4xl"></i>
+    </div>
+    <h1 class="text-5xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-4">
+      🎉 Cube Analysis Complete!
+    </h1>
+    <p class="text-xl text-gray-600">Your solution is ready with {{ solution_steps|length }} steps. Let's solve this cube!</p>
+  </div>
+
+  <div class="grid lg:grid-cols-3 gap-8">
+    <!-- Enhanced 3D Cube Visualization -->
+    <div class="lg:col-span-2 bg-white rounded-2xl shadow-xl p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">
+          <i class="fas fa-cube text-purple-600 mr-2"></i>Your Cube in 3D
+        </h2>
+        <div class="flex space-x-2">
+          <button id="autoRotate" class="bg-purple-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-purple-600 transition">
+            <i class="fas fa-play mr-1"></i>Auto Rotate
+          </button>
+          <button id="resetView" class="bg-gray-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-600 transition">
+            <i class="fas fa-undo mr-1"></i>Reset
+          </button>
+        </div>
+      </div>
+      
+      <!-- Enhanced 3D Cube Container -->
+      <div id="cube3d" class="w-full h-96 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border-2 border-gray-200 relative overflow-hidden shadow-inner"></div>
+      
+      <!-- 3D Controls -->
+      <div class="mt-6 text-center">
+        <div class="mb-4">
+          <h3 class="text-lg font-semibold text-gray-700 mb-2">Interactive Controls</h3>
+          <p class="text-sm text-gray-500">Drag to rotate • Scroll to zoom • Use buttons for precision control</p>
+        </div>
+        
+        <div class="grid grid-cols-3 gap-2 max-w-xs mx-auto">
+          <div></div>
+          <button onclick="rotateCubeDirection('x', 1)" class="bg-purple-500 text-white p-3 rounded-lg hover:bg-purple-600 transition shadow-md">
+            <i class="fas fa-arrow-up text-lg"></i>
+          </button>
+          <div></div>
+          
+          <button onclick="rotateCubeDirection('y', -1)" class="bg-purple-500 text-white p-3 rounded-lg hover:bg-purple-600 transition shadow-md">
+            <i class="fas fa-arrow-left text-lg"></i>
+          </button>
+          <button onclick="resetCubePosition()" class="bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition shadow-md">
+            <i class="fas fa-home text-lg"></i>
+          </button>
+          <button onclick="rotateCubeDirection('y', 1)" class="bg-purple-500 text-white p-3 rounded-lg hover:bg-purple-600 transition shadow-md">
+            <i class="fas fa-arrow-right text-lg"></i>
+          </button>
+          
+          <div></div>
+          <button onclick="rotateCubeDirection('x', -1)" class="bg-purple-500 text-white p-3 rounded-lg hover:bg-purple-600 transition shadow-md">
+            <i class="fas fa-arrow-down text-lg"></i>
+          </button>
+          <div></div>
+        </div>
+        
+        <!-- Zoom controls -->
+        <div class="mt-4 flex justify-center space-x-2">
+          <button onclick="zoomCube(1.2)" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition">
+            <i class="fas fa-search-plus mr-1"></i>Zoom In
+          </button>
+          <button onclick="zoomCube(0.8)" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">
+            <i class="fas fa-search-minus mr-1"></i>Zoom Out
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Solution Steps Panel -->
+    <div class="bg-white rounded-2xl shadow-xl p-6">
+      <h2 class="text-2xl font-bold text-gray-800 mb-6">
+        <i class="fas fa-list-ol text-purple-600 mr-2"></i>Solution Steps
+      </h2>
+      
+      <!-- Step counter -->
+      <div class="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+        <div class="text-center">
+          <div class="text-3xl font-bold text-purple-600" id="currentStepDisplay">1</div>
+          <div class="text-gray-600">of {{ solution_steps|length }} steps</div>
+          <div class="mt-2">
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div class="bg-gradient-to-r from-purple-600 to-blue-600 h-2 rounded-full transition-all duration-300" id="stepProgress" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Current step display -->
+      <div class="mb-6 p-4 bg-gray-50 rounded-lg border-2 border-gray-200" id="currentStepCard">
+        <div class="text-center">
+          <div class="text-2xl font-bold text-purple-600 mb-2" id="currentMove">{{ solution.split.0 }}</div>
+          <div class="text-sm text-gray-600" id="currentDescription">Preparing first move...</div>
+        </div>
+      </div>
+      
+      <!-- Navigation controls -->
+      <div class="flex justify-between mb-6">
+        <button id="prevStep" class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition disabled:opacity-50" disabled>
+          <i class="fas fa-chevron-left mr-2"></i>Previous
+        </button>
+        <button id="nextStep" class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition">
+          Next<i class="fas fa-chevron-right ml-2"></i>
+        </button>
+      </div>
+      
+      <!-- Auto-play controls -->
+      <div class="text-center mb-6">
+        <button id="autoPlay" class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition">
+          <i class="fas fa-play mr-2"></i>Auto Play
+        </button>
+        <button id="pausePlay" class="bg-yellow-500 text-white px-6 py-3 rounded-lg hover:bg-yellow-600 transition hidden">
+          <i class="fas fa-pause mr-2"></i>Pause
+        </button>
+      </div>
+      
+      <!-- All steps preview -->
+      <div class="max-h-64 overflow-y-auto">
+        <h3 class="font-semibold text-gray-700 mb-2">All Steps:</h3>
+        <div id="allSteps" class="space-y-2">
+          <!-- Steps will be populated by JavaScript -->
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Captured Faces Summary -->
+  <div class="mt-8 bg-white rounded-2xl shadow-xl p-6">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">
+      <i class="fas fa-images text-purple-600 mr-2"></i>Captured Faces Analysis
+    </h2>
+    
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for face_key, face_url in faces.items %}
+      <div class="face-analysis-card bg-gray-50 rounded-lg p-4 border-2 border-gray-200 hover:border-purple-300 transition">
+        <div class="text-center mb-3">
+          <div class="text-lg font-bold text-gray-700">{{ face_key }} Face</div>
+          <div class="text-sm text-gray-500">
+            {% if face_key == 'U' %}Up (White)
+            {% elif face_key == 'F' %}Front (Red)
+            {% elif face_key == 'R' %}Right (Green)
+            {% elif face_key == 'B' %}Back (Orange)
+            {% elif face_key == 'L' %}Left (Blue)
+            {% elif face_key == 'D' %}Down (Yellow)
+            {% endif %}
+          </div>
+        </div>
+        <div class="relative">
+          <img src="{{ face_url }}" alt="{{ face_key }} Face" class="w-full h-32 object-cover rounded border-2 border-gray-300">
+          <div class="absolute top-2 left-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">{{ face_key }}</div>
+        </div>
+        <div class="mt-3 grid grid-cols-3 gap-1" id="colorGrid{{ face_key }}">
+          <!-- Color grid will be populated by JavaScript -->
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+        </div>
+        <div></div>
+      </div>
+      
+      <div class="text-center p-4 bg-green-50 rounded-lg border border-green-200">
+        <p class="text-green-800 font-semibold">
+          <i class="fas fa-check-double mr-2"></i>All 6 faces successfully captured!
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Solution Steps -->
+  <div class="bg-white rounded-2xl shadow-xl p-6 mt-8">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-2xl font-bold text-gray-800">
+        <i class="fas fa-list-ol text-purple-600 mr-2"></i>Interactive Solution Steps
+      </h2>
+      <div class="text-sm text-gray-600">
+        <span id="currentStep">Step 1</span> of <span id="totalSteps">{{ solution_steps|length }}</span>
+      </div>
+    </div>
+    
+    <!-- Current Step Display -->
+    <div id="stepDisplay" class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-6 mb-6">
+      <div class="flex items-center justify-between">
+        <div class="flex-1">
+          <h3 class="text-xl font-bold text-gray-800 mb-2" id="stepTitle">Step 1: First Move</h3>
+          <p class="text-gray-600 text-lg" id="stepDescription">{{ solution_steps.0.description|default:"Follow the algorithm below" }}</p>
+          <div class="mt-4">
+            <span class="bg-white px-4 py-2 rounded-lg font-mono text-lg text-purple-800 border-2 border-purple-200" id="stepAlgorithm">
+              {{ solution_steps.0.move|default:solution|slice:":20" }}
+            </span>
+          </div>
+        </div>
+        <div class="ml-6">
+          <div class="w-24 h-24 bg-white rounded-lg border-2 border-purple-200 flex items-center justify-center">
+            <i class="fas fa-cube text-purple-600 text-3xl" id="stepIcon"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Step Navigation -->
+    <div class="flex justify-between items-center">
+      <button id="prevStep" onclick="changeStep(-1)" 
+              class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition disabled:opacity-50 disabled:cursor-not-allowed" 
+              disabled>
+        <i class="fas fa-chevron-left mr-2"></i>Previous
+      </button>
+      
+      <div class="flex space-x-2">
+        <button onclick="playStepByStep()" class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition">
+          <i class="fas fa-play mr-2"></i>Auto Play
+        </button>
+        <button onclick="pauseStepByStep()" class="bg-yellow-500 text-white px-6 py-3 rounded-lg hover:bg-yellow-600 transition">
+          <i class="fas fa-pause mr-2"></i>Pause
+        </button>
+      </div>
+      
+      <button id="nextStep" onclick="changeStep(1)" 
+              class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition">
+        Next<i class="fas fa-chevron-right ml-2"></i>
+      </button>
+    </div>
+    
+    <!-- Progress Bar -->
+    <div class="mt-6">
+      <div class="w-full bg-gray-200 rounded-full h-2">
+        <div id="progressBar" class="bg-gradient-to-r from-purple-600 to-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Golden 20 Steps Info -->
+  <div class="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl text-white p-6 mt-8">
+    <h2 class="text-2xl font-bold mb-4">
+      <i class="fas fa-star mr-2"></i>Learning the Golden 20 Steps
+    </h2>
+    <p class="text-lg mb-4">
+      This solution uses algorithms from the "Golden 20 Steps" - the essential moves every cuber should master!
+    </p>
+    <div class="flex flex-col sm:flex-row gap-4">
+      <a href="{% url 'help' %}" class="bg-white text-orange-600 px-6 py-3 rounded-lg hover:bg-gray-100 transition font-semibold">
+        <i class="fas fa-graduation-cap mr-2"></i>Learn All 20 Steps
+      </a>
+      <button onclick="showTutorial()" class="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition font-semibold">
+        <i class="fas fa-video mr-2"></i>Watch Tutorial
+      </button>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="text-center mt-8">
+    <div class="flex flex-col sm:flex-row justify-center gap-4">
+      <a href="{% url 'multi_capture' %}" class="bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition font-semibold">
+        <i class="fas fa-camera mr-2"></i>Solve Another Cube
+      </a>
+      <a href="{% url 'index' %}" class="bg-gray-200 text-gray-800 px-8 py-4 rounded-lg hover:bg-gray-300 transition font-semibold">
+        <i class="fas fa-home mr-2"></i>Back to Home
+      </a>
+      <button onclick="shareSolution()" class="bg-green-600 text-white px-8 py-4 rounded-lg hover:bg-green-700 transition font-semibold">
+        <i class="fas fa-share mr-2"></i>Share Solution
+      </button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Solution data from Django
+const solutionSteps = {{ solution_steps|default:"[]"|safe }};
+const cubeColors = {{ cube_colors|default:"{}"|safe }};
+const rawSolution = "{{ solution|default:'' }}";
+
+// Global variables for 3D scene
+let scene, camera, renderer, cube3D, controls;
+let currentStep = 0;
+let autoPlayInterval = null;
+let isAutoRotating = false;
+
+// Initialize everything when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  init3DCube();
+  initSolutionSteps();
+  populateColorGrids();
+  setupEventListeners();
+});
+
+// Initialize 3D cube visualization with real colors
+function init3DCube() {
+  const container = document.getElementById('cube3d');
+  const width = container.offsetWidth;
+  const height = container.offsetHeight;
+  
+  // Create scene
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xf8f9fa);
+  
+  // Create camera
+  camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+  camera.position.set(5, 5, 5);
+  camera.lookAt(0, 0, 0);
+  
+  // Create renderer
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(width, height);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  container.appendChild(renderer.domElement);
+  
+  // Add lights
+  const ambientLight = new THREE.AmbientLight(0x404040, 0.8);
+  scene.add(ambientLight);
+  
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+  directionalLight.position.set(10, 10, 5);
+  directionalLight.castShadow = true;
+  scene.add(directionalLight);
+  
+  // Create cube with real colors
+  createEnhancedRubiksCube();
+  
+  // Add mouse controls
+  addMouseControls();
+  
+  // Start animation
+  animate();
+}
+
+// Create detailed Rubik's cube with actual captured colors
+function createEnhancedRubiksCube() {
+  cube3D = new THREE.Group();
+  
+  const cubeSize = 0.3;
+  const gap = 0.02;
+  const borderSize = 0.01;
+  
+  for (let x = 0; x < 3; x++) {
+    for (let y = 0; y < 3; y++) {
+      for (let z = 0; z < 3; z++) {
+        // Create main cube geometry
+        const geometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+        
+        // Create materials for each face using actual captured colors
+        const materials = [];
+        
+        // Right face (x = 2) - R face
+        if (x === 2) {
+          const colorIndex = y * 3 + (2 - z);
+          const color = getFaceColor('R', colorIndex);
+          materials.push(new THREE.MeshLambertMaterial({ color: color }));
+        } else {
+          materials.push(new THREE.MeshLambertMaterial({ color: 0x000000 }));
+        }
+        
+        // Left face (x = 0) - L face  
+        if (x === 0) {
+          const colorIndex = y * 3 + z;
+          const color = getFaceColor('L', colorIndex);
+          materials.push(new THREE.MeshLambertMaterial({ color: color }));
+        } else {
+          materials.push(new THREE.MeshLambertMaterial({ color: 0x000000 }));
+        }
+        
+        // Top face (y = 2) - U face
+        if (y === 2) {
+          const colorIndex = (2 - z) * 3 + x;
+          const color = getFaceColor('U', colorIndex);
+          materials.push(new THREE.MeshLambertMaterial({ color: color }));
+        } else {
+          materials.push(new THREE.MeshLambertMaterial({ color: 0x000000 }));
+        }
+        
+        // Bottom face (y = 0) - D face
+        if (y === 0) {
+          const colorIndex = z * 3 + x;
+          const color = getFaceColor('D', colorIndex);
+          materials.push(new THREE.MeshLambertMaterial({ color: color }));
+        } else {
+          materials.push(new THREE.MeshLambertMaterial({ color: 0x000000 }));
+        }
+        
+        // Front face (z = 2) - F face
+        if (z === 2) {
+          const colorIndex = y * 3 + x;
+          const color = getFaceColor('F', colorIndex);
+          materials.push(new THREE.MeshLambertMaterial({ color: color }));
+        } else {
+          materials.push(new THREE.MeshLambertMaterial({ color: 0x000000 }));
+        }
+        
+        // Back face (z = 0) - B face
+        if (z === 0) {
+          const colorIndex = y * 3 + (2 - x);
+          const color = getFaceColor('B', colorIndex);
+          materials.push(new THREE.MeshLambertMaterial({ color: color }));
+        } else {
+          materials.push(new THREE.MeshLambertMaterial({ color: 0x000000 }));
+        }
+        
+        const cube = new THREE.Mesh(geometry, materials);
+        
+        // Position the small cube
+        cube.position.set(
+          (x - 1) * (cubeSize + gap),
+          (y - 1) * (cubeSize + gap), 
+          (z - 1) * (cubeSize + gap)
+        );
+        
+        cube.castShadow = true;
+        cube.receiveShadow = true;
+        
+        // Add black borders
+        const edges = new THREE.EdgesGeometry(geometry);
+        const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 2 }));
+        line.position.copy(cube.position);
+        
+        cube3D.add(cube);
+        cube3D.add(line);
+      }
+    }
+  }
+  
+  scene.add(cube3D);
+}
+
+// Get actual color from captured images
+function getFaceColor(face, index) {
+  if (cubeColors && cubeColors[face] && cubeColors[face][index]) {
+    const rgb = cubeColors[face][index];
+    return new THREE.Color(`rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`);
+  }
+  
+  // Fallback to standard colors if no captured colors
+  const standardColors = {
+    'U': 0xffffff, // White
+    'F': 0xff0000, // Red
+    'R': 0x00ff00, // Green  
+    'B': 0xff8000, // Orange
+    'L': 0x0000ff, // Blue
+    'D': 0xffff00  // Yellow
+  };
+  
+  return standardColors[face] || 0x888888;
+}
+
+// Enhanced mouse controls for cube interaction
+function addMouseControls() {
+  let isMouseDown = false;
+  let mouseX = 0, mouseY = 0;
+  
+  renderer.domElement.addEventListener('mousedown', (event) => {
+    isMouseDown = true;
+    mouseX = event.clientX;
+    mouseY = event.clientY;
+  });
+  
+  renderer.domElement.addEventListener('mousemove', (event) => {
+    if (!isMouseDown) return;
+    
+    const deltaX = event.clientX - mouseX;
+    const deltaY = event.clientY - mouseY;
+    
+    cube3D.rotation.y += deltaX * 0.01;
+    cube3D.rotation.x += deltaY * 0.01;
+    
+    mouseX = event.clientX;
+    mouseY = event.clientY;
+  });
+  
+  renderer.domElement.addEventListener('mouseup', () => {
+    isMouseDown = false;
+  });
+  
+  // Touch controls for mobile
+  renderer.domElement.addEventListener('touchstart', (event) => {
+    event.preventDefault();
+    if (event.touches.length === 1) {
+      mouseX = event.touches[0].clientX;
+      mouseY = event.touches[0].clientY;
+      isMouseDown = true;
+    }
+  });
+  
+  renderer.domElement.addEventListener('touchmove', (event) => {
+    event.preventDefault();
+    if (event.touches.length === 1 && isMouseDown) {
+      const deltaX = event.touches[0].clientX - mouseX;
+      const deltaY = event.touches[0].clientY - mouseY;
+      
+      cube3D.rotation.y += deltaX * 0.01;
+      cube3D.rotation.x += deltaY * 0.01;
+      
+      mouseX = event.touches[0].clientX;
+      mouseY = event.touches[0].clientY;
+    }
+  });
+  
+  renderer.domElement.addEventListener('touchend', () => {
+    isMouseDown = false;
+  });
+  
+  // Zoom with mouse wheel
+  renderer.domElement.addEventListener('wheel', (event) => {
+    event.preventDefault();
+    const scale = event.deltaY > 0 ? 1.1 : 0.9;
+    camera.position.multiplyScalar(scale);
+  });
+}
+
+// Animation loop
+function animate() {
+  requestAnimationFrame(animate);
+  
+  // Auto rotation if enabled
+  if (isAutoRotating) {
+    cube3D.rotation.y += 0.005;
+    cube3D.rotation.x += 0.002;
+  }
+  
+  renderer.render(scene, camera);
+}
+
+// Control functions
+function rotateCubeDirection(axis, direction) {
+  const rotation = direction * Math.PI / 6;
+  if (axis === 'x') {
+    cube3D.rotation.x += rotation;
+  } else if (axis === 'y') {
+    cube3D.rotation.y += rotation;
+  } else if (axis === 'z') {
+    cube3D.rotation.z += rotation;
+  }
+}
+
+function resetCubePosition() {
+  cube3D.rotation.set(0, 0, 0);
+  camera.position.set(5, 5, 5);
+}
+
+function zoomCube(factor) {
+  camera.position.multiplyScalar(factor);
+}
+
+// Initialize solution steps
+function initSolutionSteps() {
+  const steps = solutionSteps.length ? solutionSteps : parseRawSolution();
+  populateAllSteps(steps);
+  updateCurrentStep();
+}
+
+function parseRawSolution() {
+  if (!rawSolution) return [{ move: 'No moves needed', description: 'Cube is already solved!' }];
+  
+  const moves = rawSolution.split(' ').filter(move => move.trim());
+  return moves.map((move, index) => ({
+    move: move,
+    description: getAlgorithmDescription(move),
+    step: index + 1
+  }));
+}
+
+function getAlgorithmDescription(move) {
+  const descriptions = {
+    'R': 'Turn right face clockwise',
+    'R\'': 'Turn right face counter-clockwise', 
+    'L': 'Turn left face clockwise',
+    'L\'': 'Turn left face counter-clockwise',
+    'U': 'Turn upper face clockwise',
+    'U\'': 'Turn upper face counter-clockwise',
+    'D': 'Turn down face clockwise',
+    'D\'': 'Turn down face counter-clockwise',
+    'F': 'Turn front face clockwise',
+    'F\'': 'Turn front face counter-clockwise',
+    'B': 'Turn back face clockwise',
+    'B\'': 'Turn back face counter-clockwise',
+    'R2': 'Turn right face 180 degrees',
+    'L2': 'Turn left face 180 degrees',
+    'U2': 'Turn upper face 180 degrees',
+    'D2': 'Turn down face 180 degrees',
+    'F2': 'Turn front face 180 degrees',
+    'B2': 'Turn back face 180 degrees'
+  };
+  
+  return descriptions[move] || `Execute ${move} rotation`;
+}
+
+function populateAllSteps(steps) {
+  const container = document.getElementById('allSteps');
+  container.innerHTML = '';
+  
+  steps.forEach((step, index) => {
+    const stepDiv = document.createElement('div');
+    stepDiv.className = `step-item p-3 rounded border cursor-pointer transition ${index === currentStep ? 'bg-purple-100 border-purple-300' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'}`;
+    stepDiv.innerHTML = `
+      <div class="flex justify-between items-center">
+        <span class="font-semibold">${index + 1}. ${step.move}</span>
+        <span class="text-sm text-gray-500">${step.description}</span>
+      </div>
+    `;
+    stepDiv.onclick = () => goToStep(index);
+    container.appendChild(stepDiv);
+  });
+}
+
+function updateCurrentStep() {
+  const steps = solutionSteps.length ? solutionSteps : parseRawSolution();
+  const step = steps[currentStep] || { move: 'Complete', description: 'All done!' };
+  
+  document.getElementById('currentStepDisplay').textContent = currentStep + 1;
+  document.getElementById('currentMove').textContent = step.move;
+  document.getElementById('currentDescription').textContent = step.description;
+  
+  // Update progress
+  const progress = ((currentStep + 1) / steps.length) * 100;
+  document.getElementById('stepProgress').style.width = `${progress}%`;
+  
+  // Update navigation buttons
+  document.getElementById('prevStep').disabled = currentStep === 0;
+  document.getElementById('nextStep').disabled = currentStep >= steps.length - 1;
+  
+  // Update step highlighting
+  document.querySelectorAll('.step-item').forEach((item, index) => {
+    if (index === currentStep) {
+      item.className = 'step-item p-3 rounded border cursor-pointer transition bg-purple-100 border-purple-300';
+    } else {
+      item.className = 'step-item p-3 rounded border cursor-pointer transition bg-gray-50 border-gray-200 hover:bg-gray-100';
+    }
+  });
+}
+
+function goToStep(stepIndex) {
+  const steps = solutionSteps.length ? solutionSteps : parseRawSolution();
+  if (stepIndex >= 0 && stepIndex < steps.length) {
+    currentStep = stepIndex;
+    updateCurrentStep();
+  }
+}
+
+// Populate color grids for each face
+function populateColorGrids() {
+  const faces = ['U', 'F', 'R', 'B', 'L', 'D'];
+  
+  faces.forEach(face => {
+    const grid = document.getElementById(`colorGrid${face}`);
+    if (grid && cubeColors && cubeColors[face]) {
+      grid.innerHTML = '';
+      cubeColors[face].forEach((color, index) => {
+        const colorDiv = document.createElement('div');
+        colorDiv.className = 'w-4 h-4 border border-gray-400 rounded-sm';
+        colorDiv.style.backgroundColor = `rgb(${color.r}, ${color.g}, ${color.b})`;
+        colorDiv.title = `Position ${index + 1}`;
+        grid.appendChild(colorDiv);
+      });
+    }
+  });
+}
+
+// Event listeners
+function setupEventListeners() {
+  // Navigation buttons
+  document.getElementById('prevStep').onclick = () => {
+    if (currentStep > 0) {
+      currentStep--;
+      updateCurrentStep();
+    }
+  };
+  
+  document.getElementById('nextStep').onclick = () => {
+    const steps = solutionSteps.length ? solutionSteps : parseRawSolution();
+    if (currentStep < steps.length - 1) {
+      currentStep++;
+      updateCurrentStep();
+    }
+  };
+  
+  // Auto play controls
+  document.getElementById('autoPlay').onclick = () => {
+    startAutoPlay();
+  };
+  
+  document.getElementById('pausePlay').onclick = () => {
+    stopAutoPlay();
+  };
+  
+  // Auto rotate control
+  document.getElementById('autoRotate').onclick = () => {
+    isAutoRotating = !isAutoRotating;
+    const button = document.getElementById('autoRotate');
+    if (isAutoRotating) {
+      button.innerHTML = '<i class="fas fa-pause mr-1"></i>Stop Rotate';
+      button.className = 'bg-red-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-600 transition';
+    } else {
+      button.innerHTML = '<i class="fas fa-play mr-1"></i>Auto Rotate';
+      button.className = 'bg-purple-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-purple-600 transition';
+    }
+  };
+  
+  // Window resize handler
+  window.addEventListener('resize', () => {
+    const container = document.getElementById('cube3d');
+    const width = container.offsetWidth;
+    const height = container.offsetHeight;
+    
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+    renderer.setSize(width, height);
+  });
+}
+
+function startAutoPlay() {
+  if (autoPlayInterval) return;
+  
+  document.getElementById('autoPlay').classList.add('hidden');
+  document.getElementById('pausePlay').classList.remove('hidden');
+  
+  autoPlayInterval = setInterval(() => {
+    const steps = solutionSteps.length ? solutionSteps : parseRawSolution();
+    if (currentStep < steps.length - 1) {
+      currentStep++;
+      updateCurrentStep();
+    } else {
+      stopAutoPlay();
+    }
+  }, 2000);
+}
+
+function stopAutoPlay() {
+  if (autoPlayInterval) {
+    clearInterval(autoPlayInterval);
+    autoPlayInterval = null;
+  }
+  
+  document.getElementById('autoPlay').classList.remove('hidden');
+  document.getElementById('pausePlay').classList.add('hidden');
+}
+</script>
+{% endblock %}

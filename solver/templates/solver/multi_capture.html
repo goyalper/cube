@@ -1,0 +1,1027 @@
+{% extends 'solver/base.html' %}
+{% block title %}Capture Face {{ step }}/{{ total }} - {{ face_name }}{% endblock %}
+{% block content %}
+
+<div class="max-w-7xl mx-auto">
+  <!-- Progress Header -->
+  <div class="bg-white rounded-2xl shadow-xl p-6 mb-8">
+    <div class="text-center mb-6">
+      <h2 class="text-3xl font-bold text-gray-800" id="stepTitle">
+        Step {{ step }} of {{ total }}: Capture {{ face_name }} Face
+      </h2>
+      <div class="flex justify-center mt-4">
+        <div class="w-full max-w-md bg-gray-200 rounded-full h-3">
+          <div class="bg-gradient-to-r from-purple-600 to-blue-600 h-3 rounded-full transition-all duration-500" 
+               style="width: {% widthratio step total 100 %}%" id="progressBar"></div>
+        </div>
+      </div>
+      <p class="text-gray-600 mt-2" id="progressText">{% widthratio step total 100 %}% Complete</p>
+    </div>
+    
+    <!-- Animated Direction Arrows with Sliding Animation -->
+    <div class="text-center mb-6" id="directionInstructions">
+      <div class="direction-container" id="directionContainer">
+        {% if face_label == 'U' %}
+          <div class="arrow-up text-6xl text-blue-500 mb-2 slide-in-up">⬆️</div>
+          <p class="text-lg font-semibold text-gray-700 slide-in-left">Hold the cube with WHITE face pointing UP</p>
+        {% elif face_label == 'D' %}
+          <div class="arrow-down text-6xl text-yellow-500 mb-2 slide-in-down">⬇️</div>
+          <p class="text-lg font-semibold text-gray-700 slide-in-right">Flip cube - YELLOW face pointing DOWN</p>
+        {% elif face_label == 'F' %}
+          <div class="text-6xl text-red-500 mb-2 slide-in-zoom">⏺️</div>
+          <p class="text-lg font-semibold text-gray-700 slide-in-up">RED face pointing towards camera (FRONT)</p>
+        {% elif face_label == 'B' %}
+          <div class="text-6xl text-orange-500 mb-2 slide-in-rotate">🔄</div>
+          <p class="text-lg font-semibold text-gray-700 slide-in-down">Rotate cube - ORANGE face towards camera (BACK)</p>
+        {% elif face_label == 'R' %}
+          <div class="arrow-right text-6xl text-green-500 mb-2 slide-in-right">➡️</div>
+          <p class="text-lg font-semibold text-gray-700 slide-in-left">GREEN face pointing RIGHT</p>
+        {% elif face_label == 'L' %}
+          <div class="arrow-left text-6xl text-blue-400 mb-2 slide-in-left">⬅️</div>
+          <p class="text-lg font-semibold text-gray-700 slide-in-right">BLUE face pointing LEFT</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  
+  <div class="grid lg:grid-cols-2 gap-8">
+    <!-- Camera Section with Fixed Position -->
+    <div class="lg:sticky lg:top-4 bg-white rounded-2xl shadow-xl p-6" style="height: fit-content;">
+      <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">
+        <i class="fas fa-camera text-purple-600 mr-2"></i>Camera View
+      </h3>
+      
+      <!-- Loading overlay for camera initialization -->
+      <div id="cameraLoading" class="absolute inset-0 bg-gray-100 rounded-lg flex items-center justify-center z-10">
+        <div class="text-center">
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p class="text-gray-600">Initializing camera...</p>
+        </div>
+      </div>
+      
+      <!-- Camera container with improved aspect ratio -->
+      <div class="relative mx-auto camera-container" style="width:400px; height:400px;">
+        <video id="video" autoplay playsinline class="w-full h-full object-cover rounded-lg shadow-md"></video>
+        
+        <!-- Enhanced 3x3 Grid Overlay with perfect squares -->
+        <div class="absolute inset-0 grid-overlay">
+          <svg class="w-full h-full" viewBox="0 0 400 400">
+            <!-- Outer frame for cube alignment -->
+            <rect x="50" y="50" width="300" height="300" fill="none" stroke="#00ff00" stroke-width="4" opacity="0.9" rx="10"/>
+            
+            <!-- 3x3 Grid lines -->
+            <!-- Vertical lines -->
+            <line x1="150" y1="50" x2="150" y2="350" stroke="#fff" stroke-width="2" opacity="0.8"/>
+            <line x1="250" y1="50" x2="250" y2="350" stroke="#fff" stroke-width="2" opacity="0.8"/>
+            <!-- Horizontal lines -->
+            <line x1="50" y1="150" x2="350" y2="150" stroke="#fff" stroke-width="2" opacity="0.8"/>
+            <line x1="50" y1="250" x2="350" y2="250" stroke="#fff" stroke-width="2" opacity="0.8"/>
+            
+            <!-- Corner alignment markers -->
+            <circle cx="50" cy="50" r="8" fill="#00ff00" opacity="0.8"/>
+            <circle cx="350" cy="50" r="8" fill="#00ff00" opacity="0.8"/>
+            <circle cx="50" cy="350" r="8" fill="#00ff00" opacity="0.8"/>
+            <circle cx="350" cy="350" r="8" fill="#00ff00" opacity="0.8"/>
+            
+            <!-- Center crosshair -->
+            <circle cx="200" cy="200" r="6" fill="#ff0000" opacity="0.9"/>
+            <line x1="185" y1="200" x2="215" y2="200" stroke="#ff0000" stroke-width="3" opacity="0.9"/>
+            <line x1="200" y1="185" x2="200" y2="215" stroke="#ff0000" stroke-width="3" opacity="0.9"/>
+            
+            <!-- Face position indicator -->
+            <text x="200" y="35" text-anchor="middle" fill="#fff" font-size="14" font-weight="bold" opacity="0.9">
+              Align {{ face_name }} face here
+            </text>
+          </svg>
+        </div>
+        
+        <!-- Enhanced face indicator with animation -->
+        <div class="absolute top-3 left-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg pulse-glow" id="faceIndicator">
+          <i class="fas fa-cube mr-2"></i>{{ face_name }} Face
+        </div>
+        
+        <!-- Step counter -->
+        <div class="absolute top-3 right-3 bg-black bg-opacity-70 text-white px-3 py-1 rounded-lg text-xs font-bold">
+          {{ step }}/{{ total }}
+        </div>
+        
+        <!-- Enhanced capture hint with better visibility -->
+        <div class="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-lg text-sm font-bold shadow-lg">
+          <i class="fas fa-crosshairs mr-2"></i>Align cube with GREEN frame
+        </div>
+        
+        <!-- Live color detection preview -->
+        <div class="absolute bottom-3 right-3 bg-black bg-opacity-80 text-white px-3 py-2 rounded-lg text-xs">
+          <div class="text-center">
+            <div class="w-6 h-6 rounded border-2 border-white mx-auto mb-1" id="detectedColor"></div>
+            <div id="colorName">Detecting...</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="text-center mt-6">
+        <button id="capture" class="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-4 rounded-full hover:from-purple-700 hover:to-blue-700 transition transform hover:scale-105 shadow-lg font-semibold text-lg pulse-glow">
+          <i class="fas fa-camera mr-2"></i>Capture {{ face_name }} Face
+        </button>
+        
+        <div class="mt-4 space-x-4">
+          <button id="retakeBtn" class="text-yellow-600 hover:text-yellow-800 transition hidden" onclick="retakeCurrentFace()">
+            <i class="fas fa-redo mr-1"></i>Retake Current
+          </button>
+          <button id="skipBtn" class="text-blue-600 hover:text-blue-800 transition" onclick="skipCurrentFace()">
+            <i class="fas fa-forward mr-1"></i>Skip for Now
+          </button>
+          <a href="{% url 'multi_reset' %}" class="text-red-600 hover:text-red-800 transition" onclick="return confirm('Are you sure you want to reset all captured faces?')">
+            <i class="fas fa-redo mr-1"></i>Reset All
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 2D Face Preview Grid -->
+    <div class="bg-white rounded-2xl shadow-xl p-6">
+      <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">
+        <i class="fas fa-th text-purple-600 mr-2"></i>Captured Faces
+      </h3>
+      
+      <div class="face-preview-grid mx-auto mb-6">
+        <!-- Top row (Back face) -->
+        <div></div>
+        <div class="face-slot {% if faces.B %}captured{% endif %}" data-face="B">
+          {% if faces.B %}
+            <img src="{{ faces.B }}" alt="Back Face" class="fade-in">
+          {% else %}
+            <div class="text-gray-400">
+              <i class="fas fa-cube text-2xl"></i>
+              <div class="text-xs mt-1">BACK</div>
+            </div>
+          {% endif %}
+        </div>
+        <div></div>
+        
+        <!-- Middle row (Left, Up, Right, Down) -->
+        <div class="face-slot {% if faces.L %}captured{% endif %}" data-face="L">
+          {% if faces.L %}
+            <img src="{{ faces.L }}" alt="Left Face" class="fade-in">
+          {% else %}
+            <div class="text-gray-400">
+              <i class="fas fa-cube text-2xl"></i>
+              <div class="text-xs mt-1">LEFT</div>
+            </div>
+          {% endif %}
+        </div>
+        
+        <div class="face-slot {% if faces.U %}captured{% endif %}" data-face="U">
+          {% if faces.U %}
+            <img src="{{ faces.U }}" alt="Up Face" class="fade-in">
+          {% else %}
+            <div class="text-gray-400">
+              <i class="fas fa-cube text-2xl"></i>
+              <div class="text-xs mt-1">UP</div>
+            </div>
+          {% endif %}
+        </div>
+        
+        <div class="face-slot {% if faces.R %}captured{% endif %}" data-face="R">
+          {% if faces.R %}
+            <img src="{{ faces.R }}" alt="Right Face" class="fade-in">
+          {% else %}
+            <div class="text-gray-400">
+              <i class="fas fa-cube text-2xl"></i>
+              <div class="text-xs mt-1">RIGHT</div>
+            </div>
+          {% endif %}
+        </div>
+        
+        <!-- Second middle row (Front face) -->
+        <div></div>
+        <div class="face-slot {% if faces.F %}captured{% endif %}" data-face="F">
+          {% if faces.F %}
+            <img src="{{ faces.F }}" alt="Front Face" class="fade-in">
+          {% else %}
+            <div class="text-gray-400">
+              <i class="fas fa-cube text-2xl"></i>
+              <div class="text-xs mt-1">FRONT</div>
+            </div>
+          {% endif %}
+        </div>
+        <div></div>
+        
+        <!-- Bottom row (Down face) -->
+        <div></div>
+        <div class="face-slot {% if faces.D %}captured{% endif %}" data-face="D">
+          {% if faces.D %}
+            <img src="{{ faces.D }}" alt="Down Face" class="fade-in">
+          {% else %}
+            <div class="text-gray-400">
+              <i class="fas fa-cube text-2xl"></i>
+              <div class="text-xs mt-1">DOWN</div>
+            </div>
+          {% endif %}
+        </div>
+        <div></div>
+      </div>
+      
+      <!-- Success animation container -->
+      <div id="successAnimation" class="hidden text-center py-4">
+        <div class="text-green-500 text-4xl mb-2">✅</div>
+        <p class="text-green-600 font-semibold">Face captured successfully!</p>
+      </div>
+      
+      <!-- Current face highlight -->
+      <div class="text-center mt-6 p-4 bg-purple-50 rounded-lg border-2 border-purple-200" id="currentFaceInfo">
+        <p class="text-purple-800 font-semibold">
+          <i class="fas fa-bullseye mr-2"></i>Currently capturing: 
+          <span class="bg-purple-600 text-white px-3 py-1 rounded-full text-sm" id="currentFaceName">{{ face_name }}</span>
+        </p>
+      </div>
+      
+      <!-- Tips -->
+      <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+        <h4 class="font-bold text-blue-800 mb-2">
+          <i class="fas fa-lightbulb mr-2"></i>Pro Tips:
+        </h4>
+        <ul class="text-blue-700 text-sm space-y-1">
+          <li>• Ensure good lighting for best results</li>
+          <li>• Keep the cube stable and aligned with the grid</li>
+          <li>• Make sure all 9 squares are clearly visible</li>
+          <li>• The grid lines will help you align perfectly</li>
+        </ul>
+      </div>
+      
+      <!-- Keyboard shortcuts -->
+      <div class="mt-4 p-3 bg-gray-50 rounded-lg border">
+        <h4 class="font-bold text-gray-700 mb-2 text-sm">
+          <i class="fas fa-keyboard mr-1"></i>Keyboard Shortcuts:
+        </h4>
+        <div class="text-xs text-gray-600 space-y-1">
+          <div><kbd class="bg-gray-200 px-1 rounded">Space</kbd> or <kbd class="bg-gray-200 px-1 rounded">Enter</kbd> - Capture</div>
+          <div><kbd class="bg-gray-200 px-1 rounded">R</kbd> - Retake current face</div>
+          <div><kbd class="bg-gray-200 px-1 rounded">S</kbd> - Skip current face</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden form for submission -->
+<form id="faceForm" action="{% url 'multi_capture_face' %}" method="post" class="hidden">
+  {% csrf_token %}
+  <input type="hidden" name="face" value="{{ face_label }}" id="currentFace">
+  <input type="hidden" name="image" id="imageData">
+  <input type="hidden" name="ajax" value="1">
+</form>
+
+<!-- Custom CSS for animations -->
+<style>
+.camera-container {
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.grid-overlay {
+  pointer-events: none;
+}
+
+.slide-in-up {
+  animation: slideInUp 0.8s ease-out;
+}
+
+.slide-in-down {
+  animation: slideInDown 0.8s ease-out;
+}
+
+.slide-in-left {
+  animation: slideInLeft 0.8s ease-out;
+}
+
+.slide-in-right {
+  animation: slideInRight 0.8s ease-out;
+}
+
+.slide-in-zoom {
+  animation: slideInZoom 0.8s ease-out;
+}
+
+.slide-in-rotate {
+  animation: slideInRotate 0.8s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    transform: translateY(-100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInZoom {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRotate {
+  from {
+    transform: rotate(-180deg) scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: rotate(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.face-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 90px);
+  grid-template-rows: repeat(4, 90px);
+  gap: 10px;
+  justify-content: center;
+}
+
+.face-slot {
+  width: 90px;
+  height: 90px;
+  border: 3px solid #e5e7eb;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f9fafb;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  position: relative;
+}
+
+.face-slot.captured {
+  border-color: #10b981;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+}
+
+.face-slot.current {
+  border-color: #7c3aed;
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.6);
+  animation: pulse 2s infinite;
+}
+
+.face-slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.face-slot .face-label {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  background: rgba(0,0,0,0.7);
+  color: white;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 8px;
+  font-weight: bold;
+}
+
+.direction-container {
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 1024px) {
+  .camera-container {
+    width: 300px !important;
+    height: 300px !important;
+  }
+  
+  .face-preview-grid {
+    grid-template-columns: repeat(3, 60px);
+    grid-template-rows: repeat(4, 60px);
+  }
+  
+  .face-slot {
+    width: 60px;
+    height: 60px;
+  }
+}
+</style>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const video = document.getElementById('video');
+const canvas = document.createElement('canvas');
+canvas.width = 400; 
+canvas.height = 400;
+
+let currentFace = '{{ face_label }}';
+let currentFaceName = '{{ face_name }}';
+let isCapturing = false;
+
+// Face sequence with clear instructions
+const faceSequence = [
+  { face: 'U', name: 'Up (White)', color: '#ffffff', instruction: 'Start with WHITE center facing UP' },
+  { face: 'F', name: 'Front (Red)', color: '#ff0000', instruction: 'RED center towards camera' },
+  { face: 'R', name: 'Right (Green)', color: '#00ff00', instruction: 'Turn cube - GREEN center to the RIGHT' },
+  { face: 'B', name: 'Back (Orange)', color: '#ff8000', instruction: 'Turn cube - ORANGE center towards camera' },
+  { face: 'L', name: 'Left (Blue)', color: '#0000ff', instruction: 'Turn cube - BLUE center to the LEFT' },
+  { face: 'D', name: 'Down (Yellow)', color: '#ffff00', instruction: 'Flip cube - YELLOW center facing DOWN' }
+];
+
+// Enhanced direction instructions with better clarity
+const faceInstructions = {
+  'U': { emoji: '⬆️', text: 'Start: WHITE center pointing UP', color: 'text-gray-600', animation: 'slide-in-up' },
+  'F': { emoji: '👁️', text: 'Turn: RED center towards camera', color: 'text-red-500', animation: 'slide-in-zoom' },
+  'R': { emoji: '➡️', text: 'Turn: GREEN center pointing RIGHT', color: 'text-green-500', animation: 'slide-in-right' },
+  'B': { emoji: '🔄', text: 'Turn: ORANGE center towards camera', color: 'text-orange-500', animation: 'slide-in-rotate' },
+  'L': { emoji: '⬅️', text: 'Turn: BLUE center pointing LEFT', color: 'text-blue-500', animation: 'slide-in-left' },
+  'D': { emoji: '⬇️', text: 'Flip: YELLOW center pointing DOWN', color: 'text-yellow-500', animation: 'slide-in-down' }
+};
+
+// Initialize camera with better settings
+navigator.mediaDevices.getUserMedia({ 
+  video: { 
+    facingMode: 'environment',
+    width: { ideal: 1920 },
+    height: { ideal: 1920 }
+  } 
+})
+.then(stream => {
+  video.srcObject = stream;
+  video.onloadedmetadata = () => {
+    // Hide loading overlay
+    const loadingOverlay = document.getElementById('cameraLoading');
+    if (loadingOverlay) {
+      loadingOverlay.style.display = 'none';
+    }
+    
+    startColorDetection();
+    showSuccess('Camera initialized successfully!');
+  };
+})
+.catch(err => {
+  console.error('Camera error:', err);
+  showError('Camera access denied. Please allow camera access and refresh the page.');
+  
+  // Try with less restrictive settings
+  navigator.mediaDevices.getUserMedia({ 
+    video: { 
+      width: { ideal: 1280 },
+      height: { ideal: 1280 }
+    } 
+  })
+  .then(stream => {
+    video.srcObject = stream;
+    video.onloadedmetadata = () => {
+      // Hide loading overlay
+      const loadingOverlay = document.getElementById('cameraLoading');
+      if (loadingOverlay) {
+        loadingOverlay.style.display = 'none';
+      }
+      
+      startColorDetection();
+      showInfo('Camera initialized with basic settings');
+    };
+  })
+  .catch(secondError => {
+    console.error('Second camera attempt failed:', secondError);
+    showError('Camera not available. Please check your device settings.');
+  });
+});
+
+// Real-time color detection in center of frame
+function startColorDetection() {
+  const detectionCanvas = document.createElement('canvas');
+  detectionCanvas.width = 400;
+  detectionCanvas.height = 400;
+  const ctx = detectionCanvas.getContext('2d');
+  
+  function detectColor() {
+    if (video.videoWidth && video.videoHeight && !isCapturing) {
+      ctx.drawImage(video, 0, 0, 400, 400);
+      
+      // Sample color from center area (3x3 grid)
+      const imageData = ctx.getImageData(190, 190, 20, 20);
+      const colors = [];
+      
+      for (let i = 0; i < imageData.data.length; i += 4) {
+        colors.push({
+          r: imageData.data[i],
+          g: imageData.data[i + 1],
+          b: imageData.data[i + 2]
+        });
+      }
+      
+      // Average the colors
+      const avgColor = colors.reduce((acc, color) => ({
+        r: acc.r + color.r,
+        g: acc.g + color.g,
+        b: acc.b + color.b
+      }), { r: 0, g: 0, b: 0 });
+      
+      avgColor.r = Math.round(avgColor.r / colors.length);
+      avgColor.g = Math.round(avgColor.g / colors.length);
+      avgColor.b = Math.round(avgColor.b / colors.length);
+      
+      // Update color preview
+      const detectedColorDiv = document.getElementById('detectedColor');
+      const colorNameDiv = document.getElementById('colorName');
+      
+      if (detectedColorDiv && colorNameDiv) {
+        detectedColorDiv.style.backgroundColor = `rgb(${avgColor.r}, ${avgColor.g}, ${avgColor.b})`;
+        colorNameDiv.textContent = classifyColor(avgColor);
+      }
+    }
+    
+    requestAnimationFrame(detectColor);
+  }
+  
+  detectColor();
+}
+
+// Classify detected color
+function classifyColor(rgb) {
+  const { r, g, b } = rgb;
+  
+  // Convert to HSV for better classification
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const diff = max - min;
+  
+  if (diff < 30) return 'WHITE/GRAY';
+  
+  if (r > g && r > b && r > 150) return 'RED';
+  if (g > r && g > b && g > 150) return 'GREEN';
+  if (b > r && b > g && b > 150) return 'BLUE';
+  if (r > 200 && g > 200 && b < 100) return 'YELLOW';
+  if (r > 180 && g > 100 && b < 100) return 'ORANGE';
+  if (max < 100) return 'BLACK';
+  
+  return 'UNKNOWN';
+}
+
+// Show error message
+function showError(message) {
+  showNotification(message, 'error');
+}
+
+// Show success message
+function showSuccess(message) {
+  showNotification(message, 'success');
+}
+
+// Show info message
+function showInfo(message) {
+  showNotification(message, 'info');
+}
+
+// Generic notification function
+function showNotification(message, type = 'info') {
+  const colors = {
+    'error': 'bg-red-500',
+    'success': 'bg-green-500', 
+    'info': 'bg-blue-500',
+    'warning': 'bg-yellow-500'
+  };
+  
+  const icons = {
+    'error': 'fas fa-exclamation-circle',
+    'success': 'fas fa-check-circle',
+    'info': 'fas fa-info-circle',
+    'warning': 'fas fa-exclamation-triangle'
+  };
+  
+  const notificationDiv = document.createElement('div');
+  notificationDiv.className = `fixed top-4 right-4 ${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg z-50 max-w-sm transition-all duration-300 transform translate-x-full`;
+  notificationDiv.innerHTML = `
+    <div class="flex items-center">
+      <i class="${icons[type]} mr-2"></i>
+      <span>${message}</span>
+      <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-white hover:text-gray-200">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  `;
+  
+  document.body.appendChild(notificationDiv);
+  
+  // Slide in animation
+  setTimeout(() => {
+    notificationDiv.classList.remove('translate-x-full');
+  }, 100);
+  
+  // Auto remove after 5 seconds
+  setTimeout(() => {
+    if (notificationDiv.parentNode) {
+      notificationDiv.classList.add('translate-x-full');
+      setTimeout(() => {
+        if (notificationDiv.parentNode) {
+          notificationDiv.remove();
+        }
+      }, 300);
+    }
+  }, 5000);
+}
+
+// Update direction instructions with animation
+function updateDirectionInstructions(face) {
+  const instruction = faceInstructions[face];
+  if (!instruction) return;
+  
+  const container = document.getElementById('directionContainer');
+  
+  // Add slide-out animation to current content
+  container.style.opacity = '0';
+  container.style.transform = 'translateX(-50px)';
+  
+  setTimeout(() => {
+    container.innerHTML = `
+      <div class="${instruction.animation} text-6xl ${instruction.color} mb-2">${instruction.emoji}</div>
+      <p class="text-lg font-semibold text-gray-700 ${instruction.animation}">${instruction.text}</p>
+    `;
+    
+    // Slide in new content
+    container.style.opacity = '1';
+    container.style.transform = 'translateX(0)';
+  }, 200);
+}
+
+// Update face preview in real-time
+function updateFacePreview(face, imageUrl) {
+  const faceSlot = document.querySelector(`[data-face="${face}"]`);
+  if (faceSlot) {
+    faceSlot.innerHTML = `<img src="${imageUrl}" alt="${face} Face" class="fade-in">`;
+    faceSlot.classList.add('captured');
+    
+    // Add success animation
+    const successAnim = document.getElementById('successAnimation');
+    successAnim.classList.remove('hidden');
+    setTimeout(() => {
+      successAnim.classList.add('hidden');
+    }, 2000);
+  }
+}
+
+// Update progress bar
+function updateProgress(current, total) {
+  const progressBar = document.getElementById('progressBar');
+  const progressText = document.getElementById('progressText');
+  const percentage = Math.round((current / total) * 100);
+  
+  progressBar.style.width = `${percentage}%`;
+  progressText.textContent = `${percentage}% Complete`;
+}
+
+// Enhanced capture functionality with better feedback
+document.getElementById('capture').onclick = async () => {
+  if (isCapturing) return;
+  
+  const button = document.getElementById('capture');
+  const originalText = button.innerHTML;
+  isCapturing = true;
+  
+  // Enhanced visual feedback
+  button.innerHTML = '<i class="fas fa-camera mr-2 animate-pulse"></i>Capturing...';
+  button.disabled = true;
+  button.classList.add('scale-95');
+  
+  // Countdown animation
+  const countdown = document.createElement('div');
+  countdown.className = 'fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50';
+  countdown.innerHTML = `
+    <div class="text-white text-8xl font-bold animate-pulse" id="countdownText">3</div>
+  `;
+  document.body.appendChild(countdown);
+  
+  let count = 3;
+  const countdownInterval = setInterval(() => {
+    count--;
+    const countdownText = document.getElementById('countdownText');
+    if (countdownText) {
+      if (count > 0) {
+        countdownText.textContent = count;
+      } else {
+        countdownText.innerHTML = '<i class="fas fa-camera text-green-400"></i>';
+        clearInterval(countdownInterval);
+        
+        setTimeout(() => {
+          countdown.remove();
+          performCapture();
+        }, 500);
+      }
+    }
+  }, 1000);
+};
+
+async function performCapture() {
+  try {
+    // Enhanced flash effect
+    const flash = document.createElement('div');
+    flash.style.cssText = `
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%);
+      z-index: 9999; pointer-events: none;
+      animation: captureFlash 0.4s ease-out;
+    `;
+    document.body.appendChild(flash);
+    
+    // Add flash animation
+    if (!document.getElementById('flashStyle')) {
+      const style = document.createElement('style');
+      style.id = 'flashStyle';
+      style.textContent = `
+        @keyframes captureFlash {
+          0% { opacity: 0; }
+          50% { opacity: 1; }
+          100% { opacity: 0; }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    
+    setTimeout(async () => {
+      flash.remove();
+      
+      try {
+        // Capture image with better quality
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, 400, 400);
+        const imageData = canvas.toDataURL('image/png', 0.9);
+        
+        // Create FormData for proper AJAX submission
+        const formData = new FormData();
+        formData.append('face', currentFace);
+        formData.append('image', imageData);
+        formData.append('ajax', '1');
+        
+        // Get CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        // Send AJAX request with proper headers
+        const response = await fetch('{% url "multi_capture_face" %}', {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: formData
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          // Update preview with animation
+          updateFacePreview(currentFace, data.image_url);
+          showSuccess(`${currentFaceName} face captured successfully!`);
+          
+          if (data.complete) {
+            // All faces captured
+            showCompletionAnimation();
+            showSuccess('All faces captured! Generating solution...');
+            setTimeout(() => {
+              window.location.href = '{% url "multi_capture" %}';
+            }, 2000);
+          } else {
+            // Move to next face
+            setTimeout(() => {
+              transitionToNextFace(data);
+              showInfo(`Ready to capture ${data.next_face_name} face`);
+            }, 1000);
+          }
+        } else {
+          throw new Error(data.error || 'Capture failed');
+        }
+      } catch (error) {
+        console.error('Capture error:', error);
+        showError('Capture failed. Please try again.');
+        resetCaptureButton();
+      }
+    }, 400);
+  } catch (error) {
+    console.error('Outer capture error:', error);
+    showError('Capture failed. Please try again.');
+    resetCaptureButton();
+  }
+}
+
+function transitionToNextFace(data) {
+  currentFace = data.next_face;
+  currentFaceName = data.next_face_name;
+  
+  // Update all UI elements
+  updateProgress(data.progress, data.total);
+  updateDirectionInstructions(currentFace);
+  
+  // Update form and labels
+  document.getElementById('currentFace').value = currentFace;
+  document.getElementById('stepTitle').textContent = `Step ${data.progress + 1} of ${data.total}: Capture ${currentFaceName} Face`;
+  document.getElementById('faceIndicator').innerHTML = `<i class="fas fa-cube mr-2"></i>${currentFaceName} Face`;
+  document.getElementById('currentFaceName').textContent = currentFaceName;
+  
+  // Reset and update button
+  const button = document.getElementById('capture');
+  button.innerHTML = `<i class="fas fa-camera mr-2"></i>Capture ${currentFaceName} Face`;
+  button.disabled = false;
+  button.classList.remove('scale-95');
+  isCapturing = false;
+  
+  // Highlight current face
+  highlightCurrentFace();
+}
+
+function resetCaptureButton() {
+  const button = document.getElementById('capture');
+  button.innerHTML = `<i class="fas fa-camera mr-2"></i>Capture ${currentFaceName} Face`;
+  button.disabled = false;
+  button.classList.remove('scale-95');
+  isCapturing = false;
+}
+
+function showCompletionAnimation() {
+  const completion = document.createElement('div');
+  completion.className = 'fixed inset-0 flex items-center justify-center bg-green-500 bg-opacity-90 z-50';
+  completion.innerHTML = `
+    <div class="text-center text-white">
+      <div class="text-6xl mb-4 animate-bounce">🎉</div>
+      <h2 class="text-3xl font-bold mb-2">All Faces Captured!</h2>
+      <p class="text-xl">Analyzing your cube and generating solution...</p>
+      <div class="mt-4">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(completion);
+}
+
+// Highlight current face in preview grid
+function highlightCurrentFace() {
+  // Remove previous highlights
+  document.querySelectorAll('.face-slot').forEach(slot => {
+    slot.style.border = '';
+    slot.style.boxShadow = '';
+  });
+  
+  // Highlight current face
+  const currentSlot = document.querySelector(`[data-face="${currentFace}"]`);
+  if (currentSlot && !currentSlot.classList.contains('captured')) {
+    currentSlot.style.border = '3px solid #7c3aed';
+    currentSlot.style.boxShadow = '0 0 20px rgba(124, 58, 237, 0.5)';
+  }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+  highlightCurrentFace();
+  
+  // Add smooth transitions
+  document.getElementById('directionContainer').style.transition = 'all 0.3s ease';
+  
+  // Prevent form submission on Enter key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+    }
+  });
+});
+
+// Additional button functions
+function retakeCurrentFace() {
+  if (confirm('Are you sure you want to retake this face?')) {
+    // Remove current face from session
+    const formData = new FormData();
+    formData.append('action', 'remove_face');
+    formData.append('face', currentFace);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    fetch('{% url "multi_capture_face" %}', {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: formData
+    }).then(() => {
+      location.reload();
+    });
+  }
+}
+
+function skipCurrentFace() {
+  if (confirm('Skip this face? You can come back to it later.')) {
+    // Move to next face without capturing
+    const faces = document.querySelectorAll('.face-slot[data-face]');
+    const currentIndex = Array.from(faces).findIndex(f => f.dataset.face === currentFace);
+    
+    if (currentIndex < faces.length - 1) {
+      const nextFace = faces[currentIndex + 1].dataset.face;
+      const nextFaceName = getFaceName(nextFace);
+      
+      const data = {
+        next_face: nextFace,
+        next_face_name: nextFaceName,
+        progress: currentIndex + 1,
+        total: 6
+      };
+      
+      transitionToNextFace(data);
+    }
+  }
+}
+
+function getFaceName(face) {
+  const names = {
+    'U': 'Up (White)',
+    'F': 'Front (Red)', 
+    'R': 'Right (Green)',
+    'B': 'Back (Orange)',
+    'L': 'Left (Blue)',
+    'D': 'Down (Yellow)'
+  };
+  return names[face] || face;
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT') return; // Don't interfere with form inputs
+  
+  switch(e.key) {
+    case ' ':
+    case 'Enter':
+      e.preventDefault();
+      if (!isCapturing) {
+        document.getElementById('capture').click();
+      }
+      break;
+    case 'r':
+    case 'R':
+      e.preventDefault();
+      retakeCurrentFace();
+      break;
+    case 's':
+    case 'S':
+      e.preventDefault();
+      skipCurrentFace();
+      break;
+  }
+});
+</script>
+{% endblock %}

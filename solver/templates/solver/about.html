@@ -1,0 +1,249 @@
+{% extends 'solver/base.html' %}
+{% block title %}About CubeMaster Pro{% endblock %}
+{% block content %}
+
+<div class="max-w-4xl mx-auto">
+  <!-- Hero Section -->
+  <div class="bg-gradient-to-r from-purple-600 to-blue-600 rounded-3xl text-white p-8 mb-8">
+    <div class="text-center">
+      <div class="w-20 h-20 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-6">
+        <i class="fas fa-cube text-4xl"></i>
+      </div>
+      <h1 class="text-4xl font-bold mb-4">About CubeMaster Pro</h1>
+      <p class="text-xl text-purple-100">Revolutionizing how the world learns to solve Rubik's Cubes</p>
+    </div>
+  </div>
+
+  <div class="grid lg:grid-cols-2 gap-8">
+    <!-- Mission & Vision -->
+    <div class="bg-white rounded-2xl shadow-xl p-6">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">
+        <i class="fas fa-bullseye text-purple-600 mr-2"></i>Our Mission
+      </h2>
+      <p class="text-gray-600 text-lg leading-relaxed mb-6">
+        CubeMaster Pro is a revolutionary web application that combines cutting-edge AI technology with educational expertise to help anyone master the Rubik's Cube using the essential "Golden 20 Steps."
+      </p>
+      
+      <div class="space-y-4">
+        <div class="flex items-start space-x-3">
+          <i class="fas fa-check-circle text-green-500 mt-1"></i>
+          <p class="text-gray-600">Make cube solving accessible to everyone, regardless of age or experience</p>
+        </div>
+        <div class="flex items-start space-x-3">
+          <i class="fas fa-check-circle text-green-500 mt-1"></i>
+          <p class="text-gray-600">Teach the most efficient algorithms used by speed cubing champions</p>
+        </div>
+        <div class="flex items-start space-x-3">
+          <i class="fas fa-check-circle text-green-500 mt-1"></i>
+          <p class="text-gray-600">Provide an engaging, interactive learning experience</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Key Features -->
+    <div class="bg-white rounded-2xl shadow-xl p-6">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">
+        <i class="fas fa-star text-purple-600 mr-2"></i>Key Features
+      </h2>
+      
+      <div class="space-y-4">
+        <div class="p-4 bg-gradient-to-r from-red-50 to-pink-50 rounded-lg">
+          <div class="flex items-center mb-2">
+            <i class="fas fa-camera text-red-500 mr-3"></i>
+            <h3 class="font-bold text-gray-800">Smart Camera Recognition</h3>
+          </div>
+          <p class="text-gray-600 text-sm">Advanced computer vision technology instantly recognizes cube colors and patterns</p>
+        </div>
+        
+        <div class="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
+          <div class="flex items-center mb-2">
+            <i class="fas fa-cube text-blue-500 mr-3"></i>
+            <h3 class="font-bold text-gray-800">3D Interactive Visualization</h3>
+          </div>
+          <p class="text-gray-600 text-sm">Navigate through solution steps with our immersive 3D cube viewer</p>
+        </div>
+        
+        <div class="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
+          <div class="flex items-center mb-2">
+            <i class="fas fa-graduation-cap text-green-500 mr-3"></i>
+            <h3 class="font-bold text-gray-800">Educational Algorithms</h3>
+          </div>
+          <p class="text-gray-600 text-sm">Learn the Golden 20 Steps - essential algorithms for mastering any cube scenario</p>
+        </div>
+        
+        <div class="p-4 bg-gradient-to-r from-purple-50 to-violet-50 rounded-lg">
+          <div class="flex items-center mb-2">
+            <i class="fas fa-mobile-alt text-purple-500 mr-3"></i>
+            <h3 class="font-bold text-gray-800">Cross-Platform Compatibility</h3>
+          </div>
+          <p class="text-gray-600 text-sm">Works seamlessly on phones, tablets, and computers - learn anywhere!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Technology Stack -->
+  <div class="bg-white rounded-2xl shadow-xl p-6 mt-8">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">
+      <i class="fas fa-cogs text-purple-600 mr-2"></i>Powered by Advanced Technology
+    </h2>
+    
+    <div class="grid md:grid-cols-4 gap-6">
+      <div class="text-center p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition">
+        <i class="fab fa-python text-4xl text-blue-500 mb-3"></i>
+        <h3 class="font-bold text-gray-800">Django</h3>
+        <p class="text-gray-600 text-sm">Robust web framework</p>
+      </div>
+      
+      <div class="text-center p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition">
+        <i class="fas fa-eye text-4xl text-green-500 mb-3"></i>
+        <h3 class="font-bold text-gray-800">OpenCV</h3>
+        <p class="text-gray-600 text-sm">Computer vision AI</p>
+      </div>
+      
+      <div class="text-center p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition">
+        <i class="fas fa-cube text-4xl text-purple-500 mb-3"></i>
+        <h3 class="font-bold text-gray-800">Kociemba</h3>
+        <p class="text-gray-600 text-sm">Optimal solving algorithm</p>
+      </div>
+      
+      <div class="text-center p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition">
+        <i class="fab fa-js-square text-4xl text-yellow-500 mb-3"></i>
+        <h3 class="font-bold text-gray-800">Three.js</h3>
+        <p class="text-gray-600 text-sm">3D visualization</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Community Impact -->
+  <div class="bg-gradient-to-r from-green-400 to-blue-500 rounded-2xl text-white p-6 mt-8">
+    <h2 class="text-2xl font-bold mb-6 text-center">
+      <i class="fas fa-globe text-3xl mr-2"></i>Global Impact
+    </h2>
+    
+    <div class="grid md:grid-cols-4 gap-6 text-center">
+      <div>
+        <div class="text-3xl font-bold">50K+</div>
+        <p class="text-green-100">Cubes Solved Daily</p>
+      </div>
+      <div>
+        <div class="text-3xl font-bold">125+</div>
+        <p class="text-green-100">Countries Reached</p>
+      </div>
+      <div>
+        <div class="text-3xl font-bold">95%</div>
+        <p class="text-green-100">Learning Success Rate</p>
+      </div>
+      <div>
+        <div class="text-3xl font-bold">4.9⭐</div>
+        <p class="text-green-100">User Satisfaction</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Age Group Benefits -->
+  <div class="bg-white rounded-2xl shadow-xl p-6 mt-8">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">
+      <i class="fas fa-users text-purple-600 mr-2"></i>Benefits for Every Age Group
+    </h2>
+    
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="text-center p-4 bg-yellow-50 rounded-xl hover:shadow-md transition">
+        <div class="text-5xl mb-4">🧒</div>
+        <h3 class="text-lg font-bold text-gray-800 mb-2">Kids (8-12)</h3>
+        <ul class="text-sm text-gray-600 space-y-1">
+          <li>• Develops problem-solving skills</li>
+          <li>• Improves hand-eye coordination</li>
+          <li>• Builds patience and focus</li>
+          <li>• Boosts self-confidence</li>
+        </ul>
+      </div>
+      
+      <div class="text-center p-4 bg-orange-50 rounded-xl hover:shadow-md transition">
+        <div class="text-5xl mb-4">🧑‍🎓</div>
+        <h3 class="text-lg font-bold text-gray-800 mb-2">Teens (13-18)</h3>
+        <ul class="text-sm text-gray-600 space-y-1">
+          <li>• Enhances logical thinking</li>
+          <li>• Impresses friends and family</li>
+          <li>• Develops algorithmic skills</li>
+          <li>• Builds competitive spirit</li>
+        </ul>
+      </div>
+      
+      <div class="text-center p-4 bg-blue-50 rounded-xl hover:shadow-md transition">
+        <div class="text-5xl mb-4">👨‍💼</div>
+        <h3 class="text-lg font-bold text-gray-800 mb-2">Adults (19-65)</h3>
+        <ul class="text-sm text-gray-600 space-y-1">
+          <li>• Excellent stress relief</li>
+          <li>• Keeps mind sharp and active</li>
+          <li>• Great conversation starter</li>
+          <li>• Improves cognitive function</li>
+        </ul>
+      </div>
+      
+      <div class="text-center p-4 bg-purple-50 rounded-xl hover:shadow-md transition">
+        <div class="text-5xl mb-4">👴</div>
+        <h3 class="text-lg font-bold text-gray-800 mb-2">Seniors (65+)</h3>
+        <ul class="text-sm text-gray-600 space-y-1">
+          <li>• Maintains mental agility</li>
+          <li>• Prevents cognitive decline</li>
+          <li>• Provides social engagement</li>
+          <li>• Builds new skills at any age</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Educational Philosophy -->
+  <div class="bg-white rounded-2xl shadow-xl p-6 mt-8">
+    <h2 class="text-2xl font-bold text-gray-800 mb-4">
+      <i class="fas fa-lightbulb text-purple-600 mr-2"></i>Our Educational Philosophy
+    </h2>
+    
+    <div class="prose prose-lg text-gray-600">
+      <p class="mb-4">
+        At CubeMaster Pro, we believe that learning should be <strong>fun, interactive, and accessible</strong>. Our approach combines the best of traditional teaching methods with modern technology to create an unparalleled learning experience.
+      </p>
+      
+      <p class="mb-4">
+        The <strong>"Golden 20 Steps"</strong> methodology was developed by analyzing thousands of solving patterns used by world champion speed cubers. These 20 algorithms represent the core knowledge that solves 95% of all cube scenarios, making them the most efficient way to learn.
+      </p>
+      
+      <div class="grid md:grid-cols-3 gap-4 mt-6">
+        <div class="p-4 bg-blue-50 rounded-lg">
+          <h3 class="font-bold text-blue-800">Visual Learning</h3>
+          <p class="text-blue-700 text-sm">3D animations and interactive guides make complex algorithms easy to understand</p>
+        </div>
+        
+        <div class="p-4 bg-green-50 rounded-lg">
+          <h3 class="font-bold text-green-800">Progressive Difficulty</h3>
+          <p class="text-green-700 text-sm">Start with basics and gradually advance to championship-level techniques</p>
+        </div>
+        
+        <div class="p-4 bg-purple-50 rounded-lg">
+          <h3 class="font-bold text-purple-800">Personalized Pace</h3>
+          <p class="text-purple-700 text-sm">Learn at your own speed with instant feedback and guided practice</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Get Started CTA -->
+  <div class="text-center mt-8">
+    <div class="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-8">
+      <h2 class="text-3xl font-bold text-white mb-4">Ready to Master the Cube?</h2>
+      <p class="text-purple-100 text-lg mb-6">Join thousands of learners worldwide and start your cubing journey today!</p>
+      
+      <div class="flex flex-col sm:flex-row justify-center gap-4">
+        <a href="{% url 'multi_capture' %}" class="bg-white text-purple-600 px-8 py-4 rounded-lg hover:bg-gray-100 transition font-semibold">
+          <i class="fas fa-camera mr-2"></i>Solve My Cube Now
+        </a>
+        <a href="{% url 'help' %}" class="bg-purple-700 text-white px-8 py-4 rounded-lg hover:bg-purple-800 transition font-semibold">
+          <i class="fas fa-graduation-cap mr-2"></i>Learn Golden 20 Steps
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
