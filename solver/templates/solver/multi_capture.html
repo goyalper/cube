@@ -131,9 +131,9 @@
           <button id="skipBtn" class="text-blue-600 hover:text-blue-800 transition" onclick="skipCurrentFace()">
             <i class="fas fa-forward mr-1"></i>Skip for Now
           </button>
-          <a href="{% url 'multi_reset' %}" class="text-red-600 hover:text-red-800 transition" onclick="return confirm('Are you sure you want to reset all captured faces?')">
+          <button id="resetAllBtn" class="text-red-600 hover:text-red-800 transition" onclick="resetAllFaces()">
             <i class="fas fa-redo mr-1"></i>Reset All
-          </a>
+          </button>
         </div>
       </div>
     </div>
@@ -247,6 +247,39 @@
           <li>• Make sure all 9 squares are clearly visible</li>
           <li>• The grid lines will help you align perfectly</li>
         </ul>
+      </div>
+      
+      <!-- Color Count Display -->
+      <div class="mt-4 p-3 bg-gray-50 rounded-lg border">
+        <h4 class="font-bold text-gray-700 mb-2 text-sm">
+          <i class="fas fa-palette mr-1"></i>Color Count (Max 9 each):
+        </h4>
+        <div class="grid grid-cols-3 gap-2 text-xs">
+          <div class="flex items-center">
+            <div class="w-3 h-3 bg-white border border-gray-400 mr-1"></div>
+            <span>White: {{ color_counts.W|default:0 }}/9</span>
+          </div>
+          <div class="flex items-center">
+            <div class="w-3 h-3 bg-red-500 mr-1"></div>
+            <span>Red: {{ color_counts.R|default:0 }}/9</span>
+          </div>
+          <div class="flex items-center">
+            <div class="w-3 h-3 bg-orange-500 mr-1"></div>
+            <span>Orange: {{ color_counts.O|default:0 }}/9</span>
+          </div>
+          <div class="flex items-center">
+            <div class="w-3 h-3 bg-yellow-500 mr-1"></div>
+            <span>Yellow: {{ color_counts.Y|default:0 }}/9</span>
+          </div>
+          <div class="flex items-center">
+            <div class="w-3 h-3 bg-green-500 mr-1"></div>
+            <span>Green: {{ color_counts.G|default:0 }}/9</span>
+          </div>
+          <div class="flex items-center">
+            <div class="w-3 h-3 bg-blue-500 mr-1"></div>
+            <span>Blue: {{ color_counts.B|default:0 }}/9</span>
+          </div>
+        </div>
       </div>
       
       <!-- Keyboard shortcuts -->
@@ -406,6 +439,7 @@
 .face-slot.captured {
   border-color: #10b981;
   box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+  background: #ffffff;
 }
 
 .face-slot.current {
@@ -417,8 +451,9 @@
 .face-slot img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  border-radius: 8px;
+  object-fit: contain;
+  background: white;
+  border-radius: 6px;
 }
 
 .face-slot .face-label {
@@ -583,8 +618,21 @@ function startColorDetection() {
       const colorNameDiv = document.getElementById('colorName');
       
       if (detectedColorDiv && colorNameDiv) {
-        detectedColorDiv.style.backgroundColor = `rgb(${avgColor.r}, ${avgColor.g}, ${avgColor.b})`;
-        colorNameDiv.textContent = classifyColor(avgColor);
+        const classifiedColor = classifyColor(avgColor);
+        
+        // Map color names to CSS colors
+        const colorMap = {
+          'WHITE': '#ffffff',
+          'RED': '#ff0000',
+          'ORANGE': '#ffa500',
+          'YELLOW': '#ffff00',
+          'GREEN': '#00ff00',
+          'BLUE': '#0000ff'
+        };
+        
+        detectedColorDiv.style.backgroundColor = colorMap[classifiedColor] || '#ffffff';
+        detectedColorDiv.style.border = '2px solid #000';
+        colorNameDiv.textContent = classifiedColor;
       }
     }
     
@@ -594,25 +642,86 @@ function startColorDetection() {
   detectColor();
 }
 
-// Classify detected color
+// Classify detected color to one of 6 rigid cube colors
 function classifyColor(rgb) {
   const { r, g, b } = rgb;
   
-  // Convert to HSV for better classification
+  // Define standard cube colors
+  const standardColors = {
+    'WHITE': { r: 255, g: 255, b: 255 },
+    'RED': { r: 255, g: 0, b: 0 },
+    'ORANGE': { r: 255, g: 165, b: 0 },
+    'YELLOW': { r: 255, g: 255, b: 0 },
+    'GREEN': { r: 0, g: 255, b: 0 },
+    'BLUE': { r: 0, g: 0, b: 255 }
+  };
+  
+  // Calculate Euclidean distance to each standard color
+  let minDistance = Infinity;
+  let closestColor = 'WHITE';
+  
+  for (const [colorName, colorRGB] of Object.entries(standardColors)) {
+    const distance = Math.sqrt(
+      Math.pow(r - colorRGB.r, 2) + 
+      Math.pow(g - colorRGB.g, 2) + 
+      Math.pow(b - colorRGB.b, 2)
+    );
+    
+    if (distance < minDistance) {
+      minDistance = distance;
+      closestColor = colorName;
+    }
+  }
+  
+  // Apply HSV analysis for better accuracy
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
   const diff = max - min;
   
-  if (diff < 30) return 'WHITE/GRAY';
+  // Calculate saturation and value
+  const saturation = max === 0 ? 0 : diff / max;
+  const value = max / 255;
   
-  if (r > g && r > b && r > 150) return 'RED';
-  if (g > r && g > b && g > 150) return 'GREEN';
-  if (b > r && b > g && b > 150) return 'BLUE';
-  if (r > 200 && g > 200 && b < 100) return 'YELLOW';
-  if (r > 180 && g > 100 && b < 100) return 'ORANGE';
-  if (max < 100) return 'BLACK';
+  // Calculate hue
+  let hue = 0;
+  if (diff !== 0) {
+    if (max === r) {
+      hue = (60 * ((g - b) / diff) + 360) % 360;
+    } else if (max === g) {
+      hue = (60 * ((b - r) / diff) + 120) % 360;
+    } else {
+      hue = (60 * ((r - g) / diff) + 240) % 360;
+    }
+  }
   
-  return 'UNKNOWN';
+  // Override based on HSV for better classification
+  if (value < 0.25) {
+    // Very dark - prefer blue or keep closest non-light color
+    if (['WHITE', 'YELLOW'].includes(closestColor)) {
+      closestColor = 'BLUE';
+    }
+  } else if (saturation < 0.15) {
+    // Low saturation - likely white
+    closestColor = 'WHITE';
+  } else {
+    // High saturation - use hue
+    if (hue >= 345 || hue < 15) {
+      closestColor = 'RED';
+    } else if (hue >= 15 && hue < 35) {
+      closestColor = 'ORANGE';
+    } else if (hue >= 35 && hue < 75) {
+      closestColor = 'YELLOW';
+    } else if (hue >= 75 && hue < 165) {
+      closestColor = 'GREEN';
+    } else if (hue >= 165 && hue < 250) {
+      closestColor = 'BLUE';
+    } else if (hue >= 250 && hue < 345) {
+      // Purple/Magenta - decide between red and blue
+      closestColor = r > b ? 'RED' : 'BLUE';
+    }
+  }
+  
+  return closestColor;
 }
 
 // Show error message
@@ -942,6 +1051,48 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+
+// Enhanced reset function with proper confirmation
+function resetAllFaces() {
+  // Create custom confirmation dialog
+  const confirmDialog = document.createElement('div');
+  confirmDialog.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+  confirmDialog.innerHTML = `
+    <div class="bg-white rounded-2xl p-8 max-w-md mx-4 shadow-2xl">
+      <div class="text-center">
+        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <i class="fas fa-exclamation-triangle text-red-500 text-2xl"></i>
+        </div>
+        <h3 class="text-xl font-bold text-gray-800 mb-2">Reset All Captured Faces?</h3>
+        <p class="text-gray-600 mb-6">This will delete all captured face data and you'll need to start over. This action cannot be undone.</p>
+        <div class="flex space-x-4">
+          <button id="cancelReset" class="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition">
+            Cancel
+          </button>
+          <button id="confirmReset" class="flex-1 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">
+            Yes, Reset All
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(confirmDialog);
+  
+  // Handle cancel
+  document.getElementById('cancelReset').onclick = () => {
+    confirmDialog.remove();
+  };
+  
+  // Handle confirm
+  document.getElementById('confirmReset').onclick = () => {
+    confirmDialog.remove();
+    showInfo('Resetting all captured faces...');
+    
+    // Redirect to reset URL
+    window.location.href = '{% url "multi_reset" %}';
+  };
+}
 
 // Additional button functions
 function retakeCurrentFace() {
